@@ -23,7 +23,7 @@ class Axilent_View
 
         if(!file_exists($file))
         {
-            WPSearch_Log::add('fatal', "View '$file' was not found");
+            #WPSearch_Log::add('fatal', "View '$file' was not found");
             throw new Exception("View '$file' was not found");
         }
 

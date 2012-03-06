@@ -41,9 +41,23 @@ class Axilent
         $this->_password    = $password;
     }
     
-    protected function _makeRequest($path)
+    protected function _makeRequest($path, $arguments)
     {
         
     }
     
+    public function getPortletURL()
+    {
+        
+    }
+    
+    public function getRelevantContent($content_key)
+    {
+        
+    }
+    
+    public function postContent($content, $content_key = false)
+    {
+        
+    }
 }

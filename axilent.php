@@ -1,25 +1,24 @@
 <?php
 /*
-Plugin Name: GitHub & BitBucket Project Lister
-Plugin URI: https://github.com/katzgrau/wordpress-github
-Description: List your github and bitbucket projects on your Wordpress blog really, really easily. Why? Because you're a baller.
+Plugin Name: Axilent
+Plugin URI: https://github.com/Axilent/
+Description: Hook your Wordpress installation up with your Axilent account
 Version: 1.0.6
 Author: Kenny Katzgrau
-Author URI: http://codefury.net
+Author URI: http://www.katzgrau.com
 */
 
-require_once dirname(__FILE__) . '/lib/Project.php';
 require_once dirname(__FILE__) . '/lib/Utility.php';
 require_once dirname(__FILE__) . '/lib/View.php';
 
-add_filter("the_content",  array('WPGH_Core', 'insertProjects'));
-add_action('admin_menu',   array('WPGH_Core', 'registerAdmin'));
-add_action('widgets_init', array('WPGH_Core', 'registerWidget'));
+add_action('admin_menu',   array('Axilent_Core', 'registerAdmin'));
+add_action('widgets_init', array('Axilent_Core', 'registerWidget'));
+add_action('add_meta_boxes', array('Axilent_Core', 'addMetaBoxes'));
 
 /**
  * This class is the core of the github/bitbucket project lister.
  */
-class WPGH_Core
+class Axilent_Core
 {
 
     /**
@@ -28,90 +27,41 @@ class WPGH_Core
      */
     public static $_cacheExpiration = 3600;
 
-
-    /**
-     * A callback that will parse out things in the form {{source:username}} and
-     *  replace it with the project list. Ex, {{github:katzgrau}}
-     * @param string $content
-     * @return string The updated content
-     */
-    static function insertProjects($content)
+    static function addMetaBoxes()
     {
-        return preg_replace_callback('/\{\{((?:[\w\d\-_]+\:[\w\d\-_]+(?:[\,\s]+)?)+)\}\}/', array(__CLASS__, 'replaceCallback'), $content);
+        add_meta_box( 
+            'axilent_sectionid',
+            __( 'Axilent Content Portlet', 'axilent_textdomain' ),
+            array(__CLASS__, 'axilentAPIBox'),
+            'post' 
+        );
+        add_meta_box(
+            'axilent_sectionid',
+            __( 'Axilent Content Portlet', 'axilent_textdomain'), 
+            array(__CLASS__, 'axilentAPIBox'),
+            'page'
+        );
     }
 
-    /**
-     * The preg_replace callback used for self::insertProjects()
-     * @param array $matches The matches array
-     * @return string
-     */
-    static function replaceCallback($matches)
-    {
-        $projects = WPGH_Project::fetch($matches[1]);
+    /* Prints the box content */
+    function axilentAPIBox( $post ) {
+        // Use nonce for verification
+        wp_nonce_field(plugin_basename(__FILE__), 'axilent_noncename');
 
-        $output   = self::getOpeningListTemplate();
-
-        foreach($projects as $project)
-        {
-            $template = self::getProjectTemplate();
-            $template = str_replace('{{PROJECT_URL}}', $project->url, $template);
-            $template = str_replace('{{PROJECT_NAME}}', htmlentities($project->name), $template);
-            $template = str_replace('{{PROJECT_WATCHER_COUNT}}', $project->watchers, $template);
-            $template = str_replace('{{PROJECT_DESCRIPTION}}', htmlentities($project->description), $template);
-            $template = str_replace('{{PROJECT_SOURCE}}', $project->source, $template);
-            $template = str_replace('{{PROJECT_WATCHER_NOUN}}', $project->watcher_noun, $template);
-
-            $output .= $template . "\n";
-        }
-
-        return $output . self::getClosingListTemplate();
+        // The actual fields for data entry
+        echo '<iframe style="width:100%; height: 300px;" src="http://wpdev.axilent.net/airtower/portlets/content/?key=5ac5c760d99449c5852e66ad8b221119&content_type=Whiskey"></frame>';
     }
-
-    /**
-     * Get the template used to output the project list
-     * @return string
-     */
-    static function getProjectTemplate()
-    {
-$template = <<<TEMP
-<li>
-    <h4>
-        <a href="{{PROJECT_URL}}">
-            {{PROJECT_NAME}}
-        </a>
-    </h4>
-    <p>{{PROJECT_DESCRIPTION}} <small>({{PROJECT_WATCHER_COUNT}} {{PROJECT_WATCHER_NOUN}})</small></p>
-</li>
-TEMP;
-
-
-        return WPGH_Utility::getOption('wpgh_template', $template);
+    
+    function getPortletURL() {
+        
     }
-
-    /**
-     * Get any text we need to output before the list (perhaps, ul)
-     * @return string
-     */
-    static function getOpeningListTemplate()
-    {
-        return WPGH_Utility::getOption('wpgh_opener', '<ul>');
-    }
-
-    /**
-     * Get any text we need to output before the list (perhaps, ul)
-     * @return string
-     */
-    static function getClosingListTemplate()
-    {
-        return WPGH_Utility::getOption('wpgh_closer', '</ul>');
-    }
-
+    
     /**
      * Register the admin settings page
      */
     static function registerAdmin()
     {
-        add_options_page('Github/BitBucket', 'GitHub/BitBucket', 'edit_pages', 'wordpress-github.php', array(__CLASS__, 'adminMenuCallback'));
+        add_options_page('Axilent', 'Axilent', 'edit_pages', 'axilent.php', array(__CLASS__, 'adminMenuCallback'));
     }
 
     /**
@@ -119,26 +69,36 @@ TEMP;
      */
     static function adminMenuCallback()
     {
-        $submit  = WPGH_Utility::arrayGet($_POST, 'wpgh_submit');
+        $users   = Axilent_Utility::arrayGet($_POST, 'users');
+        $submit  = (bool)$users;
         $updated = FALSE;
 
         if($submit)
         {
-            WPGH_Utility::setOption('wpgh_opener',   WPGH_Utility::arrayGet($_POST, 'wpgh_opener'));
-            WPGH_Utility::setOption('wpgh_template', WPGH_Utility::arrayGet($_POST, 'wpgh_template'));
-            WPGH_Utility::setOption('wpgh_closer',   WPGH_Utility::arrayGet($_POST, 'wpgh_closer'));
-
-            $updated = TRUE;
+            foreach($users as $id => $value) 
+            {
+                $value = trim($value);
+                if($value) {
+                    update_user_meta($id, 'axilent_user_key', $value);
+                }
+            }
+        }
+        
+        # Attach the API key to each user object
+        $users = get_users(array('who' => 'author'));
+        for($i = 0; $i < count($users); $i++) {
+            $users[$i]->axilent_key = get_user_meta($users[$i]->ID, 'axilent_user_key', true);
         }
 
         $data = array (
-            'wpgh_opener'   => self::getOpeningListTemplate(),
-            'wpgh_closer'   => self::getClosingListTemplate(),
-            'wpgh_template' => self::getProjectTemplate(),
-            'wpgh_updated'  => $updated
+           # 'axilent_opener'   => self::getOpeningListTemplate(),
+           # 'axilent_closer'   => self::getClosingListTemplate(),
+           # 'axilent_template' => self::getProjectTemplate(),
+           # 'axilent_updated'  => $updated
+            'axilent_users' => $users
         );
 
-        WPGH_View::load('admin', $data);
+        Axilent_View::load('admin', $data);
     }
 
     /**
@@ -146,7 +106,7 @@ TEMP;
      */
     static function registerWidget()
     {
-        register_widget('WPGH_Widget');
+        register_widget('Axilent_Widget');
     }
 }
 
@@ -154,15 +114,15 @@ TEMP;
 /**
  * This is an optional widget to display GitHub projects
  */
-class WPGH_Widget extends WP_Widget
+class Axilent_Widget extends WP_Widget
 {
     /**
      * Set the widget options
      */
-     function WPGH_Widget()
+     function Axilent_Widget()
      {
-        $widget_ops = array('classname' => 'wpgh_projects', 'description' => 'A list of your GitHub or BitBucket projects');
-        $this->WP_Widget('wpgh_projects', 'GitHub Projects', $widget_ops);
+        $widget_ops = array('classname' => 'axilent_content', 'description' => 'A list of relvant Axilent content');
+        $this->WP_Widget('axilent_content', 'Axilent Content', $widget_ops);
      }
 
      /**
@@ -174,9 +134,7 @@ class WPGH_Widget extends WP_Widget
      {
          extract($args);
          $title       = apply_filters('widget_title', $instance['w_title']);
-         $info_string = $instance['w_info_string'];
-         $w_opener    = $instance['w_opener'];
-         $w_closer    = $instance['w_closer'];
+         $info_string = $instance['w_num_items'];
 
          echo $before_widget;
 
@@ -185,7 +143,7 @@ class WPGH_Widget extends WP_Widget
 
          echo $w_opener;
          
-         $projects = WPGH_Project::fetch($info_string);
+         #$projects = WPGH_Project::fetch($info_string);
 
          if(count($projects) > 0)
          {
@@ -218,9 +176,7 @@ class WPGH_Widget extends WP_Widget
         $instance = $old_instance;
         
         $instance['w_title']       = $new_instance['w_title'];
-        $instance['w_info_string'] = $new_instance['w_info_string'];
-        $instance['w_opener']      = $new_instance['w_opener'];
-        $instance['w_closer']      = $new_instance['w_closer'];
+        $instance['w_num_items'] = $new_instance['w_num_items'];
 
         return $instance;
      }
@@ -232,29 +188,17 @@ class WPGH_Widget extends WP_Widget
      function form($instance) 
      {
 
-        $defaults = array('w_title' => 'GitHub Projects', 'w_info_string' => '', 'w_opener' => '', 'w_closer' => '');
-		    $instance = wp_parse_args((array) $instance, $defaults);
+        $defaults = array('w_title' => 'Related Items', 'w_num_items' => 10);
+		$instance = wp_parse_args((array) $instance, $defaults);
        ?>
         <div class="widget-content">
        <p>
-            <label for="<?php echo $this->get_field_id('w_title'); ?>">Title:</label>
+            <label for="<?php echo $this->get_field_id('w_title'); ?>">Box title:</label>
             <input class="widefat" id="<?php echo $this->get_field_id('w_title'); ?>" name="<?php echo $this->get_field_name('w_title'); ?>" value="<?php  echo $instance['w_title']; ?>" />
        </p>
        <p>
-            <label for="<?php echo $this->get_field_id('w_info_string'); ?>">Sources:</label>
-            <input class="widefat" id="<?php echo $this->get_field_id( 'w_info_string' ); ?>" name="<?php echo $this->get_field_name('w_info_string'); ?>" value="<?php echo $instance['w_info_string']; ?>" />
-            <small>eg, github:katzgrau</small>
-       </p>
-       <div style="border-bottom: 1px dotted #ccc; margin-bottom: 8px; margin-left: 10px; margin-right: 10px;"></div>
-       <p>
-            <label for="<?php echo $this->get_field_id('w_opener'); ?>">Pre-List Markup (HTML):</label>
-            <textarea class="widefat" id="<?php echo $this->get_field_id( 'w_opener' ); ?>" name="<?php echo $this->get_field_name('w_opener'); ?>"><?php echo $instance['w_opener']; ?></textarea>
-            <small>Optional</small>
-       </p>
-       <p>
-            <label for="<?php echo $this->get_field_id('w_closer'); ?>">Post-List Markup (HTML):</label>
-            <textarea class="widefat" id="<?php echo $this->get_field_id( 'w_closer' ); ?>" name="<?php echo $this->get_field_name('w_closer'); ?>"><?php echo $instance['w_closer']; ?></textarea>
-            <small>Optional</small>
+            <label for="<?php echo $this->get_field_id('w_num_items'); ?>">Number of items:</label>
+            <input class="widefat" id="<?php echo $this->get_field_id( 'w_num_items' ); ?>" name="<?php echo $this->get_field_name('w_num_items'); ?>" value="<?php echo $instance['w_num_items']; ?>" />
        </p>
         </div>
        <?php
