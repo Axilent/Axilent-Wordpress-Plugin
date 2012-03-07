@@ -52,20 +52,24 @@
             <td><input type="text" name="account_name" /></td>
         </tr>
         <tr>
-            <td>Default API Key</td>
-            <td><input type="text" name="default_api_key" /></td>
+            <td>API Username</td>
+            <td><input type="text" name="username" /></td>
+        </tr>
+        <tr>
+            <td>API Key</td>
+            <td><input type="text" name="api_key" /></td>
         </tr>
     </tbody>
 </table>
 <input type="submit" name="axilent_submit" value="Save All Settings" />
     
-<h3>Axilent API Keys (per user)</h3>
+<h3>Axilent Portlet Keys (per user)</h3>
 <table class="axilent-table">
     <thead>
         <tr>
             <th>Name</th>
             <th>Username</th>
-            <th>Axilent API Key</th>
+            <th>Portlet Key</th>
         </tr>
     </thead>
     <tbody>
@@ -73,7 +77,7 @@
         <tr>
             <td><?php echo $user->display_name ?></td>
             <td><?php echo $user->user_login ?></td>
-            <td><input type="text" name="users[<?php echo $user->ID ?>]" value="<?php echo $user->axilent_key ?>" /></td>
+            <td><input type="text" name="users[<?php echo $user->ID ?>]" value="<?php echo $user->portlet_key ?>" /></td>
         </tr>
         <?php endforeach;?>
     </tbody>

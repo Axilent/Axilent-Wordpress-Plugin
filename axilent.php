@@ -14,19 +14,23 @@ require_once dirname(__FILE__) . '/lib/View.php';
 add_action('admin_menu',   array('Axilent_Core', 'registerAdmin'));
 add_action('widgets_init', array('Axilent_Core', 'registerWidget'));
 add_action('add_meta_boxes', array('Axilent_Core', 'addMetaBoxes'));
+add_action('publish_post', 	array('Axilent_Core', 'postCallback'));
+add_action('publish_page', 	array('Axilent_Core', 'pageCallback'));
 
 /**
  * This class is the core of the github/bitbucket project lister.
  */
 class Axilent_Core
 {
-
     /**
      * The amount of time to cache the projects for
      * @var int
      */
     public static $_cacheExpiration = 3600;
 
+    /**
+     * Add the Axilent meta box below the post content 
+     */
     static function addMetaBoxes()
     {
         add_meta_box( 
@@ -48,12 +52,14 @@ class Axilent_Core
         // Use nonce for verification
         wp_nonce_field(plugin_basename(__FILE__), 'axilent_noncename');
 
-        // The actual fields for data entry
-        echo '<iframe style="width:100%; height: 300px;" src="http://wpdev.axilent.net/airtower/portlets/content/?key=5ac5c760d99449c5852e66ad8b221119&content_type=Whiskey"></frame>';
-    }
-    
-    function getPortletURL() {
+        $portlet_key = get_user_meta(get_current_user_id(), 'axilent_portlet_key', true);
         
+        if($portlet_key)
+            $markup = '<iframe style="width:100%; height: 300px;" src="http://wpdev.axilent.net/airtower/portlets/content/?key='.$portlet_key.'&content_type=Whiskey"></frame>';
+        else
+            $markup = '<p>You do not have a portlet key defined for your user account. Have an adminitrator set it on the Axilent plugin settings page.</p>';
+        
+        echo $markup;
     }
     
     /**
@@ -70,7 +76,7 @@ class Axilent_Core
     static function adminMenuCallback()
     {
         $users   = Axilent_Utility::arrayGet($_POST, 'users');
-        $submit  = (bool)$users;
+        $submit  = (bool)($users);
         $updated = FALSE;
 
         if($submit)
@@ -78,16 +84,17 @@ class Axilent_Core
             foreach($users as $id => $value) 
             {
                 $value = trim($value);
-                if($value) {
-                    update_user_meta($id, 'axilent_user_key', $value);
-                }
+                update_user_meta($id, 'axilent_portlet_key', $value);
             }
+            
+            Axilent_Utility::setOption('axilent_api_username', $_POST['username']);
+            Axilent_Utility::setOption('axilent_api_key', $_POST['api_key']);
         }
         
         # Attach the API key to each user object
         $users = get_users(array('who' => 'author'));
         for($i = 0; $i < count($users); $i++) {
-            $users[$i]->axilent_key = get_user_meta($users[$i]->ID, 'axilent_user_key', true);
+            $users[$i]->portlet_key = get_user_meta($users[$i]->ID, 'axilent_portlet_key', true);
         }
 
         $data = array (
@@ -99,6 +106,24 @@ class Axilent_Core
         );
 
         Axilent_View::load('admin', $data);
+    }
+    
+    /**
+     * A callback executed wheeever a post is posted
+     * @param int $postId
+     */
+    public function postCallback($postId)
+    {
+        
+    }
+
+    /**
+     * A callback executed whenever a page is published
+     * @param int $postId
+     */
+    public function pageCallback($postId)
+    {
+        
     }
 
     /**
