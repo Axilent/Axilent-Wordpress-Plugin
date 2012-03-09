@@ -7,8 +7,7 @@
  */
 
 /**
- * The class contains a number of utility methods that may be needed by various
- *  parts of WPSearch
+ * The class contains a number of utility methods
  */
 class Axilent_Utility
 {
