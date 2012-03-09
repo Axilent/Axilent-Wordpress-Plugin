@@ -167,8 +167,6 @@ class Axilent_Widget extends WP_Widget
             echo $before_title . $title. $after_title;
 
          echo $w_opener;
-         
-         #$projects = WPGH_Project::fetch($info_string);
 
          if(count($projects) > 0)
          {

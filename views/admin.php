@@ -25,7 +25,7 @@
 
 <h2>Axilent Settings</h2>
 
-<?php if($wpgh_updated): ?>
+<?php if($updated): ?>
     <p class="message">
         Your settings have been updated.
     </p>
