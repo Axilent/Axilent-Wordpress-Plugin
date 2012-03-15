@@ -123,9 +123,13 @@ class Axilent
      * Get and array of relevant content
      * @param type $content_key 
      */
-    public function getRelevantContent($content_key)
+    public function getRelevantContent($policy_slug, $content_key = false)
     {
+        $args = array('content_policy_slug' => $policy_slug);
         
+        if($content_key) $args['basekey'] = $content_key;
+        
+        $result = $this->_makeRequest('get', 'axilent.content', 'policycontent', $args);
     }
     
     
