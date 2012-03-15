@@ -27,7 +27,7 @@ class Axilent_Net
         }
 
         $curl_handle = curl_init($url);
-        $options    += array(CURLOPT_RETURNTRANSFER => true);
+        $options     = array_merge(array(CURLOPT_RETURNTRANSFER => true), $options);
 
         curl_setopt_array($curl_handle, $options);
 
@@ -59,10 +59,10 @@ class Axilent_Net
     public static function post($url, $data)
     {
         return self::fetch($url, array (
-                                        CURLOPT_POST       => true,
-                                        CURLOPT_POSTFIELDS => $post_data
-                                       )
-                          );
+                CURLOPT_POST       => true,
+                CURLOPT_POSTFIELDS => $data
+            )
+        );
     }
 
     /**

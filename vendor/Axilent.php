@@ -1,29 +1,48 @@
 <?php
 /**
- * This file contains a PHP class for facilitating Axilent API calls. 
+ * This file contains classes for facilitating Axilent API calls. The only one
+ *  relevant to the average develper is class 'Axilent'. Axilent_Net is a
+ *  utility class containing static methods for making various HTTP requests.
+ * 
+ * Usage:
+ *  $client = new Axilent('fooproj, 'Foo Proj', 'somemumbojumbo');
+ *  $client->postContent(array('title' => 'Title Text', 'content' => 'Body Text'))
  */
 
 /**
  * This is the core Axilent PHP library. It is used to authenticate and make
  *  API calls to Axilent.
  * @author Kenny Katzgrau, Katzgrau LLC <kenny@katgrau.com> www.katzgau.com
+ * @version Works with Axilent API beta1
  */
 class Axilent 
-{
+{   
     /**
-     *
-     * @var type 
+     * The subdmain used for the API
+     * @var string
      */
-    protected $_apiBase = null;
+    protected $_apiDomain = null;
     
     /**
-     *
-     * @var type 
+     * The API Key
+     * @var string
      */
     protected $_apiKey = null;
     
     /**
-     * 
+     * A template for API URIs
+     * @var string 
+     */
+    protected $_apiPrototype = "http://%s.axilent.net/api/resource/%s/%s/";
+    
+    /**
+     * The version of the API we're using
+     * @var string
+     */
+    protected $_apiVersion = "beta1";
+    
+    /**
+     * A hash of active API instances
      * @var Axilent 
      */
     protected static $_instances = array();
@@ -35,27 +54,28 @@ class Axilent
     protected $_portletKey = null;
     
     /**
-     *
+     * The project name
      * @var type 
      */
-    protected $_username = null;
+    protected $_project = null;
     
     /**
      * Create a new Axilent API client
-     * @param type $api_base The base path of the API
-     * @param type $username
+     * @param type $project The project name
      * @param type $apiKey 
      */
-    public function __construct($api_base, $username, $apiKey, $portlet_key = null) 
+    public function __construct($subdomain, $project, $apiKey, $portlet_key = null)
     {
-        $this->_apiBase     = rtrim($api_base, '/') . '/';
-        $this->_username    = $username;
+        $this->_apiDomain   = $subdomain;
         $this->_apiKey      = $apiKey;
         $this->_portletKey  = $portlet_key;
+        $this->_project     = $project;
     }
     
     /**
      * Make a request to the Axilent API
+     * @param type $resource The name fo the resource we're sending data to, like
+     *  "axilent.airtower"
      * @param type $path The URI to send data to
      * @param type $arguments An associative array that will be encoded as JSON 
      *  and posted
@@ -63,27 +83,27 @@ class Axilent
      *  properties
      * @throws Exception If curl is not found
      */
-    protected function _makeRequest($path, $arguments)
+    protected function _makeRequest($method, $resource, $path, $arguments)
     {
         if(!function_exists('curl_exec'))
         {
             throw new Exception("The cURL module must be installed to use this class");
         }
 
-        $curl_handle = curl_init($url);
-        $options     = array (
-                            CURLOPT_USERPWD        => "{$this->_username}:{$this->_apiKey}",
-                            CURLOPT_RETURNTRANSFER => true,
-                            CURLOPT_POST           => true,
-                            CURLOPT_POSTFIELDS     => json_encode($arguments)
-                       );
+        $url         = $this->_getRequestURL($resource, $path);
+        $result      = Axilent_Net::call($method, $url, json_encode($arguments), array(CURLOPT_USERPWD => $this->_apiKey));
 
-        curl_setopt_array($curl_handle, $options);
-
-        $body   = curl_exec($curl_handle);
-        $status = curl_getinfo($curl_handle, CURLINFO_HTTP_CODE);
-
-        return (object)(array('url' => $url, 'body' => $body, 'status' => $status));
+        return json_decode($result);
+    }
+    
+    /**
+     * Get the request url for a call
+     * @param type $resource The resource, such as "axilent.airtower"
+     * @param type $path The URI for the request and the given resource
+     */
+    protected function _getRequestURL($resource, $path)
+    {
+        return sprintf($this->_apiPrototype, $this->_apiDomain, $resource, $this->_apiVersion) . rtrim($path, '/') . '/';
     }
     
     /**
@@ -91,20 +111,185 @@ class Axilent
      *  object instantiation
      * @throws Exception If the portlet key was not provided
      */
-    public function getPortletURL()
+    public function getPortletURL($content_key = '')
     {
         if($this->_portletKey === null)
             throw new Exception("Portlet key was not provided at initialization of " . __CLASS__);
+        
+        return "http://{$this->_portletKey}@wpdev.axilent.net/airtower/portlets/content/?key={$content_key}&content_type=post";
     }
     
-    
+    /**
+     * Get and array of relevant content
+     * @param type $content_key 
+     */
     public function getRelevantContent($content_key)
     {
         
     }
     
-    public function postContent($content, $content_key = false)
+    
+    /**
+     * Does this class have a portlet key?
+     * @return bool
+     */
+    public function hasPortletKey()
     {
+        return (bool)$this->_portletKey;
+    }
+    
+    /**
+     * Import content (create or update)
+     * @param array $content An associative array of content fields to values
+     * @param type $content_key  The content key. If this isn't provided, this
+     *  will be treated as an update
+     * @return The content key of the post just sent
+     */
+    public function postContent($content, $content_key = false, $content_type = 'post')
+    {
+        $args = array (
+            'project'      => $this->_project, 
+            'content'      => $content, 
+            'content_type' => $content_type
+        );
         
+        $method = 'post';
+        
+        if($content_key) 
+        {
+            $method = 'put';
+            $args['key'] = $content_key;
+        }
+        
+        $response = $this->_makeRequest($method, 'axilent.airtower', 'content', $args);
+        
+        if(!$content_key) {
+            list($type, $key) = explode(':', $response->created_content);
+            return $key;
+        }
+        else
+        {
+            return $content_key;
+        }
     }
 }
+
+/**
+ * Facilitates HTTP GET, POST, PUT, and DELETE calls using cURL as a backend. For
+ *  GET, will fallback to file_get_contents
+ */
+class Axilent_Net
+{
+    /**
+     * Fetch a web resource by URL
+     * @param string $url The HTTP URL that the request is being made to
+     * @param array  $options Any PHP cURL options that are needed
+     * @return object An object with properties of 'url', 'body', and 'status'
+     */
+    public static function fetch($url, $options = array())
+    {
+        if(!function_exists('curl_exec'))
+        {
+            if(!$options) return file_get_contents ($url);
+            else return '';
+        }
+
+        $curl_handle = curl_init($url);
+        $options     = array(CURLOPT_RETURNTRANSFER => true) + $options;
+
+        curl_setopt_array($curl_handle, $options);
+
+        $timer = "Call to $url via HTTP";
+
+        $body   = curl_exec($curl_handle);
+        $status = curl_getinfo($curl_handle, CURLINFO_HTTP_CODE);
+
+        if(!$status) throw new Axilent_HTTPException("Error making request to $url with ".print_r($options, true).". \nStatus: $status");
+
+        return $body;
+    }
+    
+    /**
+     * Make an HTTP call
+     * @param type $method The HTP method to use
+     * @param type $url The URL to call
+     * @param type $data The data to pass (if applicable)
+     * @param type $options The options to pass
+     * @throws Axilent_ArgumentException 
+     */
+    public static function call($method, $url, $data, $options)
+    {
+        if(method_exists(__CLASS__, $method)) {
+            return call_user_func_array(array(__CLASS__, $method), array($url, $data, $options));
+        } else {
+            throw new Axilent_ArgumentException("Method '$method' not allowed on " . __CLASS__);
+        }
+    }
+
+    /**
+     * Issues an HTTP GET request to the specified URL
+     * @param string $url
+     * @return object An object with properties of 'url', 'body', and 'status'
+     */
+    public static function get($url, $data, $options = array())
+    {
+        return self::fetch($url, $options);
+    }
+
+    /**
+     * Issues an HTTP POST request to the specified URL with the supplied POST
+     *  body
+     * @param string $url
+     * @param string $data The raw POST body
+     * @return object An object with properties of 'url', 'body', and 'status'
+     */
+    public static function post($url, $data = false, $options = array())
+    {
+        $options = array (
+                    CURLOPT_POST       => true,
+                    CURLOPT_POSTFIELDS => $data
+                    ) + $options;
+
+        return self::fetch($url, $options);
+    }
+
+    /**
+     * Issues an HTTP DELETE to the specified URL
+     * @param string $url
+     * @return object An object with properties of 'url', 'body', and 'status'
+     */
+    public static function delete($url, $data = false, $options = array())
+    {
+        $options = array (CURLOPT_CUSTOMREQUEST => 'DELETE') + $options;
+        return self::fetch($url, $options);
+    }
+
+    /**
+     * Issues an HTTP PUT to the specified URL
+     * @param string $url
+     * @param string $data Raw PUT data
+     * @return object An object with properties of 'url', 'body', and 'status'
+     */
+    public static function put($url, $data = false, $options = array())
+    {
+        $putData = tmpfile();
+
+        fwrite($putData, $data);
+        fseek($putData, 0);
+
+        $options = array (
+                        CURLOPT_PUT        => true,
+                        CURLOPT_INFILE     => $putData,
+                        CURLOPT_INFILESIZE => strlen($data)
+                        ) + $options;
+        
+        $result = self::fetch($url, $options);
+        fclose($putData);
+
+        return $result;
+    }
+}
+
+class Axilent_Exception extends Exception {}
+class Axilent_ArgumentException extends Axilent_Exception {}
+class Axilent_HTTPException extends Axilent_Exception {}

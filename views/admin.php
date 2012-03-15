@@ -48,16 +48,16 @@
     </thead>
     <tbody>
         <tr>
-            <td>Axilent Account Name</td>
-            <td><input type="text" name="account_name" /></td>
+            <td>Axilent Project Name</td>
+            <td><input type="text" name="axilent_project_name" value="<?php echo $axilent_project_name; ?>" /></td>
         </tr>
         <tr>
-            <td>API Username</td>
-            <td><input type="text" name="username" /></td>
+            <td>API Subdomain</td>
+            <td><input type="text" name="axilent_subdomain" value="<?php echo $axilent_subdomain; ?>"/></td>
         </tr>
         <tr>
             <td>API Key</td>
-            <td><input type="text" name="api_key" /></td>
+            <td><input type="text" name="axilent_api_key" value="<?php echo $axilent_api_key ?>" /></td>
         </tr>
     </tbody>
 </table>

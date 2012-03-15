@@ -10,12 +10,13 @@ Author URI: http://www.katzgrau.com
 
 require_once dirname(__FILE__) . '/lib/Utility.php';
 require_once dirname(__FILE__) . '/lib/View.php';
+require_once dirname(__FILE__) . '/lib/Model.php';
+require_once dirname(__FILE__) . '/vendor/Axilent.php';
 
 add_action('admin_menu',   array('Axilent_Core', 'registerAdmin'));
 add_action('widgets_init', array('Axilent_Core', 'registerWidget'));
 add_action('add_meta_boxes', array('Axilent_Core', 'addMetaBoxes'));
-add_action('publish_post', 	array('Axilent_Core', 'postCallback'));
-add_action('publish_page', 	array('Axilent_Core', 'pageCallback'));
+add_action('save_post', 	array('Axilent_Core', 'saveCallback'));
 
 /**
  * This class is the core of the github/bitbucket project lister.
@@ -27,6 +28,12 @@ class Axilent_Core
      * @var int
      */
     public static $_cacheExpiration = 3600;
+    
+    /**
+     * An active axlient client, if one has been created
+     * @var Axilent
+     */
+    public static $_axilent = null;
 
     /**
      * Add the Axilent meta box below the post content 
@@ -48,18 +55,54 @@ class Axilent_Core
     }
 
     /* Prints the box content */
-    function axilentAPIBox( $post ) {
+    function axilentAPIBox($post) {
         // Use nonce for verification
         wp_nonce_field(plugin_basename(__FILE__), 'axilent_noncename');
 
-        $portlet_key = get_user_meta(get_current_user_id(), 'axilent_portlet_key', true);
+        $axilent = self::getAxilentClient();
+        $content_key = get_post_meta($post->ID, 'axilent_content_key', true);
         
-        if($portlet_key)
-            $markup = '<iframe style="width:100%; height: 300px;" src="http://wpdev.axilent.net/airtower/portlets/content/?key='.$portlet_key.'&content_type=Whiskey"></frame>';
+        if(!$axilent->hasPortletKey())
+        {
+            $markup = "You do not have a portlet key defined for your user account. Have an adminitrator set it on the Axilent plugin settings page.";
+        }
         else
-            $markup = '<p>You do not have a portlet key defined for your user account. Have an adminitrator set it on the Axilent plugin settings page.</p>';
+        {
+            if($content_key)
+            {
+                try 
+                {
+                    $markup = '<iframe style="width:100%; height: 300px;" src="'.$axilent->getPortletURL($content_key).'"></frame>';
+                } 
+                catch(Exception $ex) 
+                {
+                    $markup = 'There was an error loading this section.';
+                }
+            }
+            else
+            {
+                $markup = '<p>When this post is saved, an Axilent portlet will appear here on subsequent views.</p>';
+            }
+        }
         
         echo $markup;
+    }
+    
+    /**
+     * @return Axilent  
+     */
+    static function getAxilentClient()
+    {
+        if(self::$_axilent) return self::$_axilent;
+        
+        $axilent_project_name   = Axilent_Utility::getOption('axilent_project_name');
+        $axilent_subdomain      = Axilent_Utility::getOption('axilent_subdomain');
+        $axilent_api_key        = Axilent_Utility::getOption('axilent_api_key');
+        $portlet_key            = get_user_meta(get_current_user_id(), 'axilent_portlet_key', true);
+
+        self::$_axilent = new Axilent($axilent_subdomain, $axilent_project_name, $axilent_api_key, $portlet_key);
+        
+        return self::$_axilent;
     }
     
     /**
@@ -87,8 +130,9 @@ class Axilent_Core
                 update_user_meta($id, 'axilent_portlet_key', $value);
             }
             
-            Axilent_Utility::setOption('axilent_api_username', $_POST['username']);
-            Axilent_Utility::setOption('axilent_api_key', $_POST['api_key']);
+            Axilent_Utility::setOption('axilent_subdomain', $_POST['axilent_subdomain']);
+            Axilent_Utility::setOption('axilent_project_name', $_POST['axilent_project_name']);
+            Axilent_Utility::setOption('axilent_api_key', $_POST['axilent_api_key']);
         }
         
         # Attach the API key to each user object
@@ -96,13 +140,16 @@ class Axilent_Core
         for($i = 0; $i < count($users); $i++) {
             $users[$i]->portlet_key = get_user_meta($users[$i]->ID, 'axilent_portlet_key', true);
         }
+        
+        $axilent_project_name   = Axilent_Utility::getOption('axilent_project_name');
+        $axilent_subdomain      = Axilent_Utility::getOption('axilent_subdomain');
+        $axilent_api_key        = Axilent_Utility::getOption('axilent_api_key');
 
         $data = array (
-           # 'axilent_opener'   => self::getOpeningListTemplate(),
-           # 'axilent_closer'   => self::getClosingListTemplate(),
-           # 'axilent_template' => self::getProjectTemplate(),
-           # 'axilent_updated'  => $updated
-            'axilent_users' => $users
+            'axilent_project_name'  => $axilent_project_name,
+            'axilent_subdomain'     => $axilent_subdomain,
+            'axilent_api_key'       => $axilent_api_key,
+            'axilent_users'         => $users
         );
 
         Axilent_View::load('admin', $data);
@@ -112,18 +159,23 @@ class Axilent_Core
      * A callback executed wheeever a post is posted
      * @param int $postId
      */
-    public function postCallback($postId)
+    public function saveCallback($postId)
     {
+        $parents = get_post_ancestors($postId);
+        if(count($parents)) $postId = $parents[0];
         
-    }
+        $post         = get_post($postId);
+        $content_key  = get_post_meta($postId, 'axilent_content_key', true);
 
-    /**
-     * A callback executed whenever a page is published
-     * @param int $postId
-     */
-    public function pageCallback($postId)
-    {
+        if(!$content_key) $content_key = false;
         
+        $content = array (
+            'Content' => $post->post_content,
+            'Title'   => $post->post_title
+        );
+
+        $content_key = self::getAxilentClient()->postContent($content, $content_key);
+        update_post_meta($postId, 'axilent_content_key', $content_key);
     }
 
     /**
