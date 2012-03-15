@@ -72,11 +72,12 @@ class Axilent_Core
             {
                 try 
                 {
-                    $markup = '<iframe style="width:100%; height: 300px;" src="'.$axilent->getPortletURL($content_key).'"></frame>';
+                    $markup = '<iframe style="width:100%; height: 300px;" src="'.$axilent->getPortletURL($content_key).'"></iframe>';
                 } 
                 catch(Exception $ex) 
                 {
                     $markup = 'There was an error loading this section.';
+                    error_log($ex->__toString());
                 }
             }
             else
@@ -260,7 +261,7 @@ class Axilent_Widget extends WP_Widget
       * Display the widget update form
       * @param array $instance
       */
-     function form($instance) 
+     function form($instance)
      {
 
         $defaults = array('w_title' => 'Related Items', 'w_num_items' => 10);

@@ -163,13 +163,15 @@ class Axilent
         
         $response = $this->_makeRequest($method, 'axilent.airtower', 'content', $args);
         
-        if(!$content_key) {
+        if(!$content_key) 
+        {
             list($type, $key) = explode(':', $response->created_content);
             return $key;
         }
         else
         {
-            return $content_key;
+            list($type, $key) = explode(':', $response->updated_content);
+            return $key;
         }
     }
 }
