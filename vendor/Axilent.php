@@ -145,7 +145,7 @@ class Axilent
         
         $result = $this->_makeRequest('get', 'function', 'axilent.content', 'policycontent', $args);
         
-        var_dump($result); exit;
+        return $result;
     }
     
     
@@ -225,7 +225,9 @@ class Axilent_Net
 
         $body   = curl_exec($curl_handle);
         $status = curl_getinfo($curl_handle, CURLINFO_HTTP_CODE);
-//exit("$url / $status / $body / " . print_r($options, true));
+    
+        #exit("$url / $status / $body / " . print_r($options, true));
+        
         if(!$status) throw new Axilent_HTTPException("Error making request to $url with ".print_r($options, true).". \nStatus: $status");
 
         return $body;

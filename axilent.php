@@ -225,19 +225,20 @@ class Axilent_Widget extends WP_Widget
 
          echo $w_opener;
 
-         if(count($projects) > 0)
+         if(count($content->default) > 0)
          {
              echo "<ul>";
-             foreach($projects as $project)
+             foreach($content->default as $item)
              {
-                $noun = $project->watchers == 1 ? 'watcher' : 'watchers';
                 echo "<li>";
-                    echo "<a target=\"_blank\" href=\"{$project->url}\" title=\"{$project->description} &mdash; {$project->watchers} $noun \">";
-                            echo $project->name;
+                    echo "<a target=\"_blank\" href=\"\" \">";
+                            echo "Data! But no idea how to display :(";
                     echo "</a>";
                 echo "</li>";
              }
              echo "</ul>";
+         } else {
+             echo "<p><em>No related items to list</em></p>";
          }
 
          echo $w_closer;
@@ -278,7 +279,7 @@ class Axilent_Widget extends WP_Widget
             <input class="widefat" id="<?php echo $this->get_field_id('w_title'); ?>" name="<?php echo $this->get_field_name('w_title'); ?>" value="<?php  echo $instance['w_title']; ?>" />
        </p>
        <p>
-            <label for="<?php echo $this->get_field_id('w_policy_content'); ?>">Policy Content:</label>
+            <label for="<?php echo $this->get_field_id('w_policy_content'); ?>">Content Channel:</label>
             <input class="widefat" id="<?php echo $this->get_field_id('w_policy_content'); ?>" name="<?php echo $this->get_field_name('w_policy_content'); ?>" value="<?php  echo $instance['w_policy_content']; ?>" />
        </p>
        <p>
