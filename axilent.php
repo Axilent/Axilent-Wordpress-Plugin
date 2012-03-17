@@ -162,6 +162,12 @@ class Axilent_Core
      */
     public function saveCallback($postId)
     {
+        if(get_post_status($postId) != 'publish') 
+        {
+            # No interest
+            return;
+        }
+        
         $parents = get_post_ancestors($postId);
         if(count($parents)) $postId = $parents[0];
         
