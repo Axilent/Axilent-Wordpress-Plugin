@@ -21,7 +21,16 @@
         width: 100%;
     }
     
+    input[type="submit"] {
+        margin-top: 10px;
+    }
+    
+    #logo {
+        margin-top: 20px;
+    }
 </style>
+
+<img id="logo" src="<?php echo get_bloginfo('url') . '/wp-content/plugins/axilent/static/axilent.png' ?>" />
 
 <h2>Axilent Settings</h2>
 
@@ -32,8 +41,8 @@
 <?php endif; ?>
 
 <p>
-    This is the Axilent settings page. You should probably have an Axilent
-    if you are using this plugin.
+    This is the Axilent settings page. You must have an Axilent account
+    in order to use this plugin.
 </p>
 
 <form method="post">

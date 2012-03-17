@@ -210,10 +210,14 @@ class Axilent_Widget extends WP_Widget
       */
      function widget($args, $instance)
      {
+         global $wp_query;
          extract($args);
+         
          $title       = apply_filters('widget_title', $instance['w_title']);
-         $info_string = $instance['w_num_items'];
-
+         $info_string = $instance['w_num_items'];         
+         $content_key = get_post_meta($wp_query->post->ID, 'axilent_content_key', true);
+         $content     = Axilent_Core::getAxilentClient()->getRelevantContent($instance['w_policy_content'], $content_key);
+         
          echo $before_widget;
 
          if($title);
@@ -252,7 +256,8 @@ class Axilent_Widget extends WP_Widget
         $instance = $old_instance;
         
         $instance['w_title']       = $new_instance['w_title'];
-        $instance['w_num_items'] = $new_instance['w_num_items'];
+        $instance['w_policy_content']= $new_instance['w_policy_content'];
+        $instance['w_num_items']   = $new_instance['w_num_items'];
 
         return $instance;
      }
@@ -269,8 +274,12 @@ class Axilent_Widget extends WP_Widget
        ?>
         <div class="widget-content">
        <p>
-            <label for="<?php echo $this->get_field_id('w_title'); ?>">Box title:</label>
+            <label for="<?php echo $this->get_field_id('w_title'); ?>">Title:</label>
             <input class="widefat" id="<?php echo $this->get_field_id('w_title'); ?>" name="<?php echo $this->get_field_name('w_title'); ?>" value="<?php  echo $instance['w_title']; ?>" />
+       </p>
+       <p>
+            <label for="<?php echo $this->get_field_id('w_policy_content'); ?>">Policy Content:</label>
+            <input class="widefat" id="<?php echo $this->get_field_id('w_policy_content'); ?>" name="<?php echo $this->get_field_name('w_policy_content'); ?>" value="<?php  echo $instance['w_policy_content']; ?>" />
        </p>
        <p>
             <label for="<?php echo $this->get_field_id('w_num_items'); ?>">Number of items:</label>

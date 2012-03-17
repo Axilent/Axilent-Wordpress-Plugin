@@ -30,10 +30,16 @@ class Axilent
     protected $_apiKey = null;
     
     /**
-     * A template for API URIs
+     * A template for API Functions
      * @var string 
      */
-    protected $_apiPrototype = "http://%s.axilent.net/api/resource/%s/%s/";
+    protected $_functionPrototype = "http://%s.axilent.net/api/%s/%s/";
+    
+    /**
+     * A template for API Resources
+     * @var string 
+     */
+    protected $_resourcePrototype = "http://%s.axilent.net/api/resource/%s/%s/";
     
     /**
      * The version of the API we're using
@@ -74,7 +80,8 @@ class Axilent
     
     /**
      * Make a request to the Axilent API
-     * @param type $resource The name fo the resource we're sending data to, like
+     * @param type $method The request type, like "get", "post", etc.
+     * @param type $type The name fo the resource we're sending data to, like
      *  "axilent.airtower"
      * @param type $path The URI to send data to
      * @param type $arguments An associative array that will be encoded as JSON 
@@ -83,27 +90,34 @@ class Axilent
      *  properties
      * @throws Exception If curl is not found
      */
-    protected function _makeRequest($method, $resource, $path, $arguments)
+    protected function _makeRequest($method, $type, $target, $path = false, $arguments = array())
     {
         if(!function_exists('curl_exec'))
         {
             throw new Exception("The cURL module must be installed to use this class");
         }
 
-        $url         = $this->_getRequestURL($resource, $path);
-        $result      = Axilent_Net::call($method, $url, json_encode($arguments), array(CURLOPT_USERPWD => $this->_apiKey));
+        $url = $this->_getRequestURL($type, $target, $path);
+        
+        if($method == 'get')
+            $result = Axilent_Net::call('get', $url, $arguments, array(CURLOPT_USERPWD => $this->_apiKey));
+        else
+            $result = Axilent_Net::call($method, $url, json_encode($arguments), array(CURLOPT_USERPWD => $this->_apiKey));
 
         return json_decode($result);
     }
     
     /**
      * Get the request url for a call
-     * @param type $resource The resource, such as "axilent.airtower"
+     * @param type $target The resourceor function, such as "axilent.airtower"
      * @param type $path The URI for the request and the given resource
      */
-    protected function _getRequestURL($resource, $path)
+    protected function _getRequestURL($type, $target, $path = false)
     {
-        return sprintf($this->_apiPrototype, $this->_apiDomain, $resource, $this->_apiVersion) . rtrim($path, '/') . '/';
+        return sprintf($type == 'resource' ? $this->_resourcePrototype : $this->_functionPrototype, 
+                $this->_apiDomain,
+                $target,
+                $this->_apiVersion) . ($path ? rtrim($path, '/').'/' : '');
     }
     
     /**
@@ -129,7 +143,9 @@ class Axilent
         
         if($content_key) $args['basekey'] = $content_key;
         
-        $result = $this->_makeRequest('get', 'axilent.content', 'policycontent', $args);
+        $result = $this->_makeRequest('get', 'function', 'axilent.content', 'policycontent', $args);
+        
+        var_dump($result); exit;
     }
     
     
@@ -165,7 +181,7 @@ class Axilent
             $args['key'] = $content_key;
         }
         
-        $response = $this->_makeRequest($method, 'axilent.airtower', 'content', $args);
+        $response = $this->_makeRequest($method, 'resource', 'axilent.airtower', 'content', $args);
         
         if(!$content_key) 
         {
@@ -209,7 +225,7 @@ class Axilent_Net
 
         $body   = curl_exec($curl_handle);
         $status = curl_getinfo($curl_handle, CURLINFO_HTTP_CODE);
-
+//exit("$url / $status / $body / " . print_r($options, true));
         if(!$status) throw new Axilent_HTTPException("Error making request to $url with ".print_r($options, true).". \nStatus: $status");
 
         return $body;
@@ -237,8 +253,9 @@ class Axilent_Net
      * @param string $url
      * @return object An object with properties of 'url', 'body', and 'status'
      */
-    public static function get($url, $data, $options = array())
+    public static function get($url, $data = false, $options = array())
     {
+        if($data) $url .= '?'.http_build_query($data);
         return self::fetch($url, $options);
     }
 
