@@ -30,6 +30,29 @@ class Axilent_Model
         else
             return $posts[0];
     }
+    
+    public static function getPostsByMetaValues($values)
+    {
+        global $wpdb;
+        $values = implode("','", $values);
+
+        $table = self::getTableName('postmeta');
+
+        $sql = "SELECT post_id, meta_value
+                FROM $table
+                WHERE meta_value IN ('$values')";
+
+        $posts = $wpdb->get_results($sql);
+
+        $return = array();
+        
+        foreach($posts as $post)
+        {
+            $return[$post->meta_value] = $post->post_id;
+        }
+        
+        return $return;
+    }
 
     public static function getPublishedDocuments($page = 0, $per_page = 10)
     {

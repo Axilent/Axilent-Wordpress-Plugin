@@ -220,9 +220,10 @@ class Axilent_Widget extends WP_Widget
          extract($args);
          
          $title       = apply_filters('widget_title', $instance['w_title']);
-         $info_string = $instance['w_num_items'];         
+         $num_items = $instance['w_num_items'];         
          $content_key = get_post_meta($wp_query->post->ID, 'axilent_content_key', true);
-         $content     = Axilent_Core::getAxilentClient()->getRelevantContent($instance['w_policy_content'], $content_key);
+         $content     = Axilent_Core::getAxilentClient()->getRelevantContent($instance['w_policy_content'], $content_key, $num_items);
+         $keys        = array();
          
          echo $before_widget;
 
@@ -230,6 +231,12 @@ class Axilent_Widget extends WP_Widget
             echo $before_title . $title. $after_title;
 
          echo $w_opener;
+         
+         foreach($content->default as $item) {
+             $keys[] = $item->content->key;
+         }
+         
+         $meta = Axilent_Model::getPostsByMetaValues($keys);
 
          if(count($content->default) > 0)
          {
@@ -237,8 +244,8 @@ class Axilent_Widget extends WP_Widget
              foreach($content->default as $item)
              {
                 echo "<li>";
-                    echo "<a target=\"_blank\" href=\"\" \">";
-                            echo "Data! But no idea how to display :(";
+                    echo "<a href=\"". get_permalink($meta[$item->content->key]) ."\" \">";
+                           echo htmlentities($item->content->data->Title);
                     echo "</a>";
                 echo "</li>";
              }
