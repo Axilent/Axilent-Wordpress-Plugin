@@ -16,7 +16,7 @@
  * @version Works with Axilent API beta1
  */
 class Axilent 
-{   
+{
     /**
      * The subdmain used for the API
      * @var string
@@ -203,6 +203,13 @@ class Axilent
 class Axilent_Net
 {
     /**
+     * Will do a bunch of things for debugging purposes.
+     *  - Write the request headers for any calls to request.txt
+     * @var bool
+     */
+    protected static $_debug = true;
+    
+    /**
      * Fetch a web resource by URL
      * @param string $url The HTTP URL that the request is being made to
      * @param array  $options Any PHP cURL options that are needed
@@ -219,12 +226,23 @@ class Axilent_Net
         $curl_handle = curl_init($url);
         $options     = array(CURLOPT_RETURNTRANSFER => true) + $options;
 
+        if(self::$_debug)
+        {
+            $f = tmpfile();
+            $options[CURLOPT_VERBOSE] = 1;
+            $options[CURLOPT_STDERR] = $f;
+        }
+        
         curl_setopt_array($curl_handle, $options);
-
-        $timer = "Call to $url via HTTP";
 
         $body   = curl_exec($curl_handle);
         $status = curl_getinfo($curl_handle, CURLINFO_HTTP_CODE);
+        
+        if(self::$_debug) {
+            fseek($f, 0);
+            self::_log("Request headers (".date('Y-m-d H:i:s')."): " . stream_get_contents($f));
+            fclose($f);
+        }
     
         #exit("$url / $status / $body / " . print_r($options, true));
         
@@ -261,6 +279,18 @@ class Axilent_Net
         return self::fetch($url, $options);
     }
 
+    
+    /**
+     * Log a message to a log file
+     * @param type $message 
+     */
+    protected static function _log($message)
+    {
+        if(!self::$_debug) return;
+        
+        error_log("Axilent DEBUG: $message");
+    }
+    
     /**
      * Issues an HTTP POST request to the specified URL with the supplied POST
      *  body
