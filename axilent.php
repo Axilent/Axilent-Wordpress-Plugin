@@ -165,7 +165,9 @@ class Axilent_Core
      */
     public function saveCallback($postId)
     {
-        if(get_post_status($postId) != 'publish') 
+        $do_sync = Axilent_Utility::getOption('axilent_sync');
+        
+        if(get_post_status($postId) != 'publish' || $do_sync == 'no') 
         {
             # No interest
             return;
