@@ -97,11 +97,10 @@ class Axilent_Core
         if(self::$_axilent) return self::$_axilent;
         
         $axilent_project_name   = Axilent_Utility::getOption('axilent_project_name');
-        $axilent_subdomain      = Axilent_Utility::getOption('axilent_subdomain');
         $axilent_api_key        = Axilent_Utility::getOption('axilent_api_key');
         $portlet_key            = get_user_meta(get_current_user_id(), 'axilent_portlet_key', true);
 
-        self::$_axilent = new Axilent($axilent_subdomain, $axilent_project_name, $axilent_api_key, $portlet_key);
+        self::$_axilent = new Axilent($axilent_project_name, $axilent_api_key, $portlet_key);
         
         return self::$_axilent;
     }
@@ -131,9 +130,13 @@ class Axilent_Core
                 update_user_meta($id, 'axilent_portlet_key', $value);
             }
             
-            Axilent_Utility::setOption('axilent_subdomain', $_POST['axilent_subdomain']);
             Axilent_Utility::setOption('axilent_project_name', $_POST['axilent_project_name']);
-            Axilent_Utility::setOption('axilent_api_key', $_POST['axilent_api_key']);
+            Axilent_Utility::setOption('axilent_project_name', $_POST['axilent_project_name']);
+            
+            if($_POST['axilent_sync'])
+                Axilent_Utility::setOption('axilent_sync', 'yes');
+            else
+                Axilent_Utility::setOption('axilent_sync', 'no');
         }
         
         # Attach the API key to each user object
@@ -143,14 +146,14 @@ class Axilent_Core
         }
         
         $axilent_project_name   = Axilent_Utility::getOption('axilent_project_name');
-        $axilent_subdomain      = Axilent_Utility::getOption('axilent_subdomain');
         $axilent_api_key        = Axilent_Utility::getOption('axilent_api_key');
+        $axilent_sync           = Axilent_Utility::getOption('axilent_sync');
 
         $data = array (
             'axilent_project_name'  => $axilent_project_name,
-            'axilent_subdomain'     => $axilent_subdomain,
             'axilent_api_key'       => $axilent_api_key,
-            'axilent_users'         => $users
+            'axilent_users'         => $users,
+            'axilent_sync'          => $axilent_sync
         );
 
         Axilent_View::load('admin', $data);

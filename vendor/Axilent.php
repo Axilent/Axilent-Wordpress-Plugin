@@ -16,13 +16,7 @@
  * @version Works with Axilent API beta1
  */
 class Axilent 
-{
-    /**
-     * The subdmain used for the API
-     * @var string
-     */
-    protected $_apiDomain = null;
-    
+{    
     /**
      * The API Key
      * @var string
@@ -33,13 +27,13 @@ class Axilent
      * A template for API Functions
      * @var string 
      */
-    protected $_functionPrototype = "http://%s.axilent.net/api/%s/%s/";
+    protected $_functionPrototype = "http://wpdev.axilent.net/api/%s/%s/";
     
     /**
      * A template for API Resources
      * @var string 
      */
-    protected $_resourcePrototype = "http://%s.axilent.net/api/resource/%s/%s/";
+    protected $_resourcePrototype = "http://wpdev.axilent.net/api/resource/%s/%s/";
     
     /**
      * The version of the API we're using
@@ -70,9 +64,8 @@ class Axilent
      * @param type $project The project name
      * @param type $apiKey 
      */
-    public function __construct($subdomain, $project, $apiKey, $portlet_key = null)
+    public function __construct($project, $apiKey, $portlet_key = null)
     {
-        $this->_apiDomain   = $subdomain;
         $this->_apiKey      = $apiKey;
         $this->_portletKey  = $portlet_key;
         $this->_project     = $project;
@@ -114,8 +107,7 @@ class Axilent
      */
     protected function _getRequestURL($type, $target, $path = false)
     {
-        return sprintf($type == 'resource' ? $this->_resourcePrototype : $this->_functionPrototype, 
-                $this->_apiDomain,
+        return sprintf($type == 'resource' ? $this->_resourcePrototype : $this->_functionPrototype,
                 $target,
                 $this->_apiVersion) . ($path ? rtrim($path, '/').'/' : '');
     }
@@ -231,6 +223,7 @@ class Axilent_Net
             $f = tmpfile();
             $options[CURLOPT_VERBOSE] = 1;
             $options[CURLOPT_STDERR] = $f;
+            self::_log("Call to $url ...");
         }
         
         curl_setopt_array($curl_handle, $options);
@@ -242,6 +235,7 @@ class Axilent_Net
             fseek($f, 0);
             self::_log("Request headers (".date('Y-m-d H:i:s')."): " . stream_get_contents($f));
             fclose($f);
+            self::_log("Recieved HTTP $status and \n $body in respose..");
         }
     
         #exit("$url / $status / $body / " . print_r($options, true));

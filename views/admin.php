@@ -61,12 +61,12 @@
             <td><input type="text" name="axilent_project_name" value="<?php echo $axilent_project_name; ?>" /></td>
         </tr>
         <tr>
-            <td>API Subdomain</td>
-            <td><input type="text" name="axilent_subdomain" value="<?php echo $axilent_subdomain; ?>"/></td>
-        </tr>
-        <tr>
             <td>API Key</td>
             <td><input type="text" name="axilent_api_key" value="<?php echo $axilent_api_key ?>" /></td>
+        </tr>
+        <tr>
+            <td>Sync posts to Axilent</td>
+            <td><input type="checkbox" name="axilent_sync" value="true" <?php if($axilent_sync == "yes" || !$axilent_sync) echo "checked" ?> /></td>
         </tr>
     </tbody>
 </table>
