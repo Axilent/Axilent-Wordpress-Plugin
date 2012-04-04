@@ -130,8 +130,12 @@ class Axilent_Core
                 update_user_meta($id, 'axilent_portlet_key', $value);
             }
             
-            Axilent_Utility::setOption('axilent_project_name', $_POST['axilent_project_name']);
-            Axilent_Utility::setOption('axilent_project_name', $_POST['axilent_project_name']);
+            Axilent_Utility::setOption('axilent_project_name',      $_POST['axilent_project_name']);
+            Axilent_Utility::setOption('axilent_api_key',           $_POST['axilent_api_key']);
+            Axilent_Utility::setOption('axilent_title_field',       $_POST['axilent_title_field']);
+            Axilent_Utility::setOption('axilent_link_field',        $_POST['axilent_link_field']);
+            Axilent_Utility::setOption('axilent_description_field', $_POST['axilent_description_field']);
+            Axilent_Utility::setOption('axilent_content_field',     $_POST['axilent_content_field']);
             
             if($_POST['axilent_sync'])
                 Axilent_Utility::setOption('axilent_sync', 'yes');
@@ -145,15 +149,23 @@ class Axilent_Core
             $users[$i]->portlet_key = get_user_meta($users[$i]->ID, 'axilent_portlet_key', true);
         }
         
-        $axilent_project_name   = Axilent_Utility::getOption('axilent_project_name');
-        $axilent_api_key        = Axilent_Utility::getOption('axilent_api_key');
-        $axilent_sync           = Axilent_Utility::getOption('axilent_sync');
+        $axilent_project_name       = Axilent_Utility::getOption('axilent_project_name');
+        $axilent_api_key            = Axilent_Utility::getOption('axilent_api_key');
+        $axilent_title_field        = Axilent_Utility::getOption('axilent_title_field');
+        $axilent_description_field  = Axilent_Utility::getOption('axilent_description_field');
+        $axilent_link_field         = Axilent_Utility::getOption('axilent_link_field');
+        $axilent_content_field      = Axilent_Utility::getOption('axilent_content_field');
+        $axilent_sync               = Axilent_Utility::getOption('axilent_sync');
 
         $data = array (
-            'axilent_project_name'  => $axilent_project_name,
-            'axilent_api_key'       => $axilent_api_key,
-            'axilent_users'         => $users,
-            'axilent_sync'          => $axilent_sync
+            'axilent_project_name'      => $axilent_project_name,
+            'axilent_api_key'           => $axilent_api_key,
+            'axilent_title_field'       => $axilent_title_field,
+            'axilent_link_field'        => $axilent_link_field,
+            'axilent_content_field'     => $axilent_content_field,
+            'axilent_description_field' => $axilent_description_field,
+            'axilent_users'             => $users,
+            'axilent_sync'              => $axilent_sync
         );
 
         Axilent_View::load('admin', $data);
@@ -173,6 +185,17 @@ class Axilent_Core
             return;
         }
         
+        # Get the options
+        $axilent_title_field        = Axilent_Utility::getOption('axilent_title_field');
+        $axilent_description_field  = Axilent_Utility::getOption('axilent_description_field');
+        $axilent_link_field         = Axilent_Utility::getOption('axilent_link_field');
+        $axilent_content_field      = Axilent_Utility::getOption('axilent_content_field');
+        
+        # Set some defaults for non-existant options
+        $axilent_title_field        = $axilent_title_field ? $axilent_title_field : 'Title';
+        $axilent_description_field  = $axilent_description_field ? $axilent_description_field : 'Description';
+        $axilent_link_field         = $axilent_link_field ? $axilent_link_field : 'Link';
+        
         $parents = get_post_ancestors($postId);
         if(count($parents)) $postId = $parents[0];
         
@@ -182,8 +205,10 @@ class Axilent_Core
         if(!$content_key) $content_key = false;
         
         $content = array (
-            'Content' => $post->post_content,
-            'Title'   => $post->post_title
+            $axilent_content_field => $post->post_content,
+            $axilent_title_field => $post->post_title,
+            $axilent_link_field => get_permalink($postId)
+            # TODO: Description/Summary?
         );
 
         $content_key = self::getAxilentClient()->postContent($content, $content_key);
@@ -225,7 +250,10 @@ class Axilent_Widget extends WP_Widget
          extract($args);
          
          $title       = apply_filters('widget_title', $instance['w_title']);
-         $num_items = $instance['w_num_items'];         
+         $num_items   = $instance['w_num_items'];         
+         $link_field  = $instance['w_link_field'];         
+         $title_field = $instance['w_title_field'];         
+         $description_field = $instance['description_field'];         
          $content_key = get_post_meta($wp_query->post->ID, 'axilent_content_key', true);
          $content     = Axilent_Core::getAxilentClient()->getRelevantContent($instance['w_policy_content'], $content_key, $num_items);
          $keys        = array();
@@ -237,28 +265,37 @@ class Axilent_Widget extends WP_Widget
 
          echo $w_opener;
          
-         foreach($content->default as $item) {
-             $keys[] = $item->content->key;
-         }
-         
-         $meta = Axilent_Model::getPostsByMetaValues($keys);
-
-         if(count($content->default) > 0)
+         if(!isset($content->default) || !$content->default)
          {
-             echo "<ul>";
-             foreach($content->default as $item)
-             {
-                echo "<li>";
-                    echo "<a href=\"". get_permalink($meta[$item->content->key]) ."\" \">";
-                           echo htmlentities($item->content->data->Title);
-                    echo "</a>";
-                echo "</li>";
-             }
-             echo "</ul>";
-         } else {
-             echo "<p><em>No related items to list</em></p>";
+             echo "No items to show";
          }
+         else
+         {
+            foreach($content->default as $item) {
+                $keys[] = $item->content->key;
+            }
 
+            $meta = Axilent_Model::getPostsByMetaValues($keys);
+
+            if(count($content->default) > 0)
+            {
+                echo "<ul>";
+                foreach($content->default as $item)
+                {
+                    $i_link = isset($item->content->data->{$link_field}) ? $item->content->data->{$link_field} : '#';
+                    $i_title = isset($item->content->data->{$title_field}) ? $item->content->data->{$title_field} : 'Set Widget Settings';
+
+                    echo "<li>";
+                        echo "<a href=\"". $i_link ."\" \">";
+                            echo htmlentities($i_title);
+                        echo "</a>";
+                    echo "</li>";
+                }
+                echo "</ul>";
+            } else {
+                echo "<p><em>No related items to list</em></p>";
+            }
+         }
          echo $w_closer;
 
          echo $after_widget;
@@ -274,9 +311,12 @@ class Axilent_Widget extends WP_Widget
      {
         $instance = $old_instance;
         
-        $instance['w_title']       = $new_instance['w_title'];
-        $instance['w_policy_content']= $new_instance['w_policy_content'];
-        $instance['w_num_items']   = $new_instance['w_num_items'];
+        $instance['w_title']            = $new_instance['w_title'];
+        $instance['w_policy_content']   = $new_instance['w_policy_content'];
+        $instance['w_num_items']        = $new_instance['w_num_items'];
+        $instance['w_link_field']       = $new_instance['w_link_field'];
+        $instance['w_title_field']      = $new_instance['w_title_field'];
+        $instance['w_description_field']= $new_instance['w_description_field'];
 
         return $instance;
      }
@@ -288,7 +328,13 @@ class Axilent_Widget extends WP_Widget
      function form($instance)
      {
 
-        $defaults = array('w_title' => 'Related Items', 'w_num_items' => 10);
+        $defaults = array('w_title'             => 'Related Items', 
+                          'w_policy_content'    => 'posts',
+                          'w_num_items'         => 10,
+                          'w_link_field'        => 'Link',
+                          'w_title_field'       => 'Title',
+                          'w_description_field' => 'Description');
+        
 		$instance = wp_parse_args((array) $instance, $defaults);
        ?>
         <div class="widget-content">
@@ -303,6 +349,18 @@ class Axilent_Widget extends WP_Widget
        <p>
             <label for="<?php echo $this->get_field_id('w_num_items'); ?>">Number of items:</label>
             <input class="widefat" id="<?php echo $this->get_field_id( 'w_num_items' ); ?>" name="<?php echo $this->get_field_name('w_num_items'); ?>" value="<?php echo $instance['w_num_items']; ?>" />
+       </p>
+       <p>
+            <label for="<?php echo $this->get_field_id('w_link_field'); ?>">Link field name:</label>
+            <input class="widefat" id="<?php echo $this->get_field_id( 'w_link_field' ); ?>" name="<?php echo $this->get_field_name('w_link_field'); ?>" value="<?php echo $instance['w_link_field']; ?>" />
+       </p>
+       <p>
+            <label for="<?php echo $this->get_field_id('w_title_field'); ?>">Title field name:</label>
+            <input class="widefat" id="<?php echo $this->get_field_id( 'w_title_field' ); ?>" name="<?php echo $this->get_field_name('w_title_field'); ?>" value="<?php echo $instance['w_title_field']; ?>" />
+       </p>
+       <p>
+            <label for="<?php echo $this->get_field_id('w_description_field'); ?>">Description field name:</label>
+            <input class="widefat" id="<?php echo $this->get_field_id( 'w_description_field' ); ?>" name="<?php echo $this->get_field_name('w_description_field'); ?>" value="<?php echo $instance['w_description_field']; ?>" />
        </p>
         </div>
        <?php

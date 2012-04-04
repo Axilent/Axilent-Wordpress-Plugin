@@ -68,6 +68,22 @@
             <td>Sync posts to Axilent</td>
             <td><input type="checkbox" name="axilent_sync" value="true" <?php if($axilent_sync == "yes" || !$axilent_sync) echo "checked" ?> /></td>
         </tr>
+        <tr>
+            <td>Sync Title Field</td>
+            <td><input type="text" name="axilent_title_field" value="<?php echo $axilent_title_field ? $axilent_title_field : 'Title' ?>" /></td>
+        </tr>
+        <tr>
+            <td>Sync Content Field</td>
+            <td><input type="text" name="axilent_content_field" value="<?php echo $axilent_content_field ? $axilent_content_field : 'Content' ?>" /></td>
+        </tr>
+        <tr>
+            <td>Sync Description Field</td>
+            <td><input type="text" name="axilent_description_field" value="<?php echo $axilent_description_field ? $axilent_description_field : 'Description' ?>" /></td>
+        </tr>
+        <tr>
+            <td>Sync Link Field</td>
+            <td><input type="text" name="axilent_link_field" value="<?php echo $axilent_link_field ? $axilent_link_field : '$axilent_link_field' ?>" /></td>
+        </tr>
     </tbody>
 </table>
 <input type="submit" name="axilent_submit" value="Save All Settings" />
