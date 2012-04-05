@@ -205,10 +205,11 @@ class Axilent_Core
         if(!$content_key) $content_key = false;
         
         $content = array (
-            $axilent_content_field => $post->post_content,
-            $axilent_title_field => $post->post_title,
-            $axilent_link_field => get_permalink($postId)
-            # TODO: Description/Summary?
+            $axilent_content_field      => $post->post_content,
+            $axilent_title_field        => $post->post_title,
+            $axilent_link_field         => get_permalink($postId),
+            # And snag the first 3 sentences
+            $axilent_description_field  => implode('. ', array_slice(explode('. ', $post->post_content),0, 3))
         );
 
         $content_key = self::getAxilentClient()->postContent($content, $content_key);
