@@ -72,7 +72,7 @@ class Axilent_Core
             {
                 try 
                 {
-                    $markup = '<iframe style="width:100%; height: 6x00px;" src="'.$axilent->getPortletURL($content_key).'"></iframe>';
+                    $markup = '<iframe style="width:100%; height: 600px;" src="'.$axilent->getPortletURL($content_key).'"></iframe>';
                 } 
                 catch(Exception $ex) 
                 {
