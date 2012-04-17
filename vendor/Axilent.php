@@ -27,13 +27,13 @@ class Axilent
      * A template for API Functions
      * @var string 
      */
-    protected $_functionPrototype = "http://www.axilent.net/api/%s/%s/";
+    protected $_functionPrototype = "https://www.axilent.net/api/%s/%s/";
     
     /**
      * A template for API Resources
      * @var string 
      */
-    protected $_resourcePrototype = "http://www.axilent.net/api/resource/%s/%s/";
+    protected $_resourcePrototype = "https://www.axilent.net/api/resource/%s/%s/";
     
     /**
      * The version of the API we're using
@@ -122,7 +122,7 @@ class Axilent
         if($this->_portletKey === null)
             throw new Exception("Portlet key was not provided at initialization of " . __CLASS__);
         
-        return "http://{$this->_portletKey}@www.axilent.net/airtower/portlets/content/?key={$content_key}&content_type=post";
+        return "https://{$this->_portletKey}@www.axilent.net/airtower/portlets/content/?key={$content_key}&content_type=post";
     }
     
     /**
