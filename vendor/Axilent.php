@@ -33,13 +33,13 @@ class Axilent
      * The API base template, less the domain
      * @var type 
      */
-    protected $_apiBaseTemplate = "http://%s/";
+    protected $_apiBaseTemplate = "https://%s/";
     
     /**
      * The domain for the API endpoints
      * @var type 
      */
-    protected $_apiDomain = "wpdev.axilent.net";
+    protected $_apiDomain = "www.axilent.net";
     /**
      * A template for API Functions
      * @var string 
