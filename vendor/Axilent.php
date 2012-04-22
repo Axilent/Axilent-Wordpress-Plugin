@@ -191,14 +191,19 @@ class Axilent
         );
         
         $method = 'post';
-        
-        if($content_key) 
+
+        if($content_key)
         {
             $method = 'put';
             $args['key'] = $content_key;
         }
         
         $response = $this->_makeRequest($method, 'resource', 'axilent.airtower', 'content', $args);
+        
+        # If a PUT fails, come back with a post
+        if($method == 'put' && Axilent_Net::$lastStatus != '200') {
+            $response = $this->_makeRequest('post', 'resource', 'axilent.airtower', 'content', $args);
+        }
         
         if(!$content_key) 
         {
@@ -225,6 +230,12 @@ class Axilent_Net
      * @var bool
      */
     protected static $_debug = true;
+    
+    /**
+     * The HTTP status of the last request
+     * @var type 
+     */
+    public static $lastStatus = 0;
     
     /**
      * Fetch a web resource by URL
@@ -264,6 +275,8 @@ class Axilent_Net
         }
     
         #exit("$url / $status / $body / " . print_r($options, true));
+        
+        self::$lastStatus = $status;
         
         if(!$status) throw new Axilent_HTTPException("Error making request to $url with ".print_r($options, true).". \nStatus: $status");
 
