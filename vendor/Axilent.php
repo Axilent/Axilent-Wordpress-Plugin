@@ -24,16 +24,33 @@ class Axilent
     protected $_apiKey = null;
     
     /**
+     * The base URL for the Axilent API. Will be set int he constructor
+     * @var type 
+     */
+    protected $_apiBase = null;
+    
+    /**
+     * The API base template, less the domain
+     * @var type 
+     */
+    protected $_apiBaseTemplate = "http://%s/";
+    
+    /**
+     * The domain for the API endpoints
+     * @var type 
+     */
+    protected $_apiDomain = "wpdev.axilent.net";
+    /**
      * A template for API Functions
      * @var string 
      */
-    protected $_functionPrototype = "https://www.axilent.net/api/%s/%s/";
+    protected $_functionPrototype = "api/%s/%s/";
     
     /**
      * A template for API Resources
      * @var string 
      */
-    protected $_resourcePrototype = "https://www.axilent.net/api/resource/%s/%s/";
+    protected $_resourcePrototype = "api/resource/%s/%s/";
     
     /**
      * The version of the API we're using
@@ -69,6 +86,11 @@ class Axilent
         $this->_apiKey      = $apiKey;
         $this->_portletKey  = $portlet_key;
         $this->_project     = $project;
+        
+        # Build the API
+        $this->_apiBase     = sprintf($this->_apiBaseTemplate, $this->_apiDomain);
+        $this->_functionPrototype = $this->_apiBase . $this->_functionPrototype;
+        $this->_resourcePrototype = $this->_apiBase . $this->_resourcePrototype;
     }
     
     /**
@@ -122,7 +144,10 @@ class Axilent
         if($this->_portletKey === null)
             throw new Exception("Portlet key was not provided at initialization of " . __CLASS__);
         
-        return "https://{$this->_portletKey}@www.axilent.net/airtower/portlets/content/?key={$content_key}&content_type=post";
+        $domain_with_auth = $this->_portletKey . '@' . $this->_apiDomain;
+        $temp_base = sprintf($this->_apiBaseTemplate, $domain_with_auth);
+        
+        return "{$temp_base}airtower/portlets/content/?key={$content_key}&content_type=post";
     }
     
     /**
