@@ -28,6 +28,15 @@
     #logo {
         margin-top: 20px;
     }
+    
+    #widget-console {
+        background-color: white;
+        font-family:monospace;
+        border: 2px dotted #cd5a5a;
+        padding: 7px;
+        white-space: pre-wrap;
+        width: 80%;
+    }
 </style>
 
 <img id="logo" src="<?php echo get_bloginfo('url') . '/wp-content/plugins/axilent/static/axilent.png' ?>" />
@@ -108,5 +117,24 @@
     </tbody>
 </table>
 <input type="submit" name="axilent_submit" value="Save All Settings" />
+
+<h3>Debug: Test All Widgets and Content Posting</h3>
+<p>Note: This will attempt to make a test post on your Axilent account which should be deleted.</p>
+
+<?php if($widget_errors): ?>
+<pre id="widget-console">
+<?php foreach($widget_errors as $error): ?>
+<?php echo $error.PHP_EOL; ?>
+<?php endforeach; ?>
+</pre>
+<?php endif; ?>
+<?php if(!$widget_errors && isset($_POST['axilent_widget_test'])): ?>
+<pre id="widget-console">No errors found: <?php echo Axilent_Net::$lastStatus ?></pre>
+<?php endif; ?>
+
+<form method="post">
+    <input type="submit" name="axilent_widget_test" value="Test Settings" />
+</form>
+
 </form>
 <?php

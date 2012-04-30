@@ -119,6 +119,18 @@ class Axilent
         else
             $result = Axilent_Net::call($method, $url, json_encode($arguments), array(CURLOPT_USERPWD => $this->_apiKey));
 
+        if(Axilent_Net::$lastStatus == '409') {
+            throw new Axilent_MisconfigurationException("Recieved misconfiguration status from endpoint at $url with HTTP $method and args" . print_r($arguments, true));
+        }
+        
+        if(Axilent_Net::$lastStatus == '401') {
+            throw new Axilent_UnauthorizedException("Recieved an HTTP 401 (Unauthorized) exception from $url on HTTP $method and args " . print_r($arguments, true));
+        }
+        
+        if(substr(Axilent_Net::$lastStatus, 0, 1) == '4') {
+            throw new Axilent_HTTPException("General HTTP Error (".Axilent_Net::$lastStatus.") found at $url with HTTP $method and args" . print_r($arguments, true));
+        }
+        
         return json_decode($result);
     }
     
@@ -252,7 +264,9 @@ class Axilent_Net
         }
 
         $curl_handle = curl_init($url);
-        $options     = array(CURLOPT_RETURNTRANSFER => true) + $options;
+        $options     = array(CURLOPT_RETURNTRANSFER => true, 
+                             CURLOPT_FOLLOWLOCATION => true) 
+                       + $options;
 
         if(self::$_debug)
         {
@@ -380,3 +394,5 @@ class Axilent_Net
 class Axilent_Exception extends Exception {}
 class Axilent_ArgumentException extends Axilent_Exception {}
 class Axilent_HTTPException extends Axilent_Exception {}
+class Axilent_UnauthorizedException extends Axilent_HTTPException {}
+class Axilent_MisconfigurationException extends Axilent_HTTPException {}

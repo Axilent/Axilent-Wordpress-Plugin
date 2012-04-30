@@ -156,6 +156,53 @@ class Axilent_Core
         $axilent_link_field         = Axilent_Utility::getOption('axilent_link_field');
         $axilent_content_field      = Axilent_Utility::getOption('axilent_content_field');
         $axilent_sync               = Axilent_Utility::getOption('axilent_sync');
+        
+        # Test the widgets if we need to
+        if(isset($_POST['axilent_widget_test']))
+        {
+            $widget_errors = array();
+            $widgets = get_option('widget_axilent_content');
+            foreach($widgets as $order => $widget)
+            {
+                if(!is_numeric($order)) continue;
+                
+                $policy_content = $widget['w_policy_content'];
+                
+                try
+                {
+                    self::getAxilentClient()->getRelevantContent($policy_content);
+                }
+                catch(Axilent_MisconfigurationException $ex)
+                {
+                    $widget_errors[] = "Widget: The widget with policy content setting '$policy_content' is misconfigured: ".$ex->getMessage();
+                }
+                catch(Axilent_UnauthorizedException $ex)
+                {
+                    $widget_errors[] = "Unauthorized: Check your API key. An 'Unauthorized' error occurs when making calls: ".$ex->getMessage();
+                }
+                catch(Axilent_Exception $ex)
+                {
+                    $widget_errors[] = "Widget: There was a general error for the widget with policy content setting '$policy_content': ".$ex->getMessage();
+                }
+            }
+            
+            try
+            {
+                self::getAxilentClient()->postContent("This is the Wordpress debug test");
+            }
+            catch(Axilent_MisconfigurationException $ex)
+            {
+                $widget_errors[] = "Content Posting: Posting content to Axilent via the general configuration on the admin page is broken: ".$ex->getMessage();
+            }
+            catch(Axilent_UnauthorizedException $ex)
+            {
+                $widget_errors[] = "Unauthorized: Check your API key. An 'Unauthorized' error occurs when making calls: ".$ex->getMessage();
+            }
+            catch(Axilent_Exception $ex)
+            {
+                $widget_errors[] = "Content Posting: There was a general error posting content with the settings above: ".$ex->getMessage();
+            }
+        }
 
         $data = array (
             'axilent_project_name'      => $axilent_project_name,
@@ -165,7 +212,8 @@ class Axilent_Core
             'axilent_content_field'     => $axilent_content_field,
             'axilent_description_field' => $axilent_description_field,
             'axilent_users'             => $users,
-            'axilent_sync'              => $axilent_sync
+            'axilent_sync'              => $axilent_sync,
+            'widget_errors'             => $widget_errors
         );
 
         Axilent_View::load('admin', $data);
