@@ -188,6 +188,22 @@ class Axilent
     }
     
     /**
+     * Ping the axilent API to check for configuration status. 
+     * @param type $content_type The content type to check. 'post' by default
+     * @throws Various Axilent HTTP Exceptions if something goes wrong
+     * @return bool False for anything other than an HTTP 200
+     */
+    public function ping($content_type = 'post') 
+    {
+        $response = $this->_makeRequest('get', 'function', 'axilent.airtower', 'ping', array (
+            'project' => $this->_project,
+            'content_type' => $content_type
+        ));
+        
+        return (Axilent_Net::$lastStatus == '200');
+    }
+    
+    /**
      * Import content (create or update)
      * @param array $content An associative array of content fields to values
      * @param type $content_key  The content key. If this isn't provided, this

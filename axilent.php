@@ -188,7 +188,9 @@ class Axilent_Core
             
             try
             {
-                self::getAxilentClient()->postContent("This is the Wordpress debug test");
+                if(!self::getAxilentClient()->ping()) {
+                    $widget_errors[] = "Axilent system is reporting that this instance is configured incorrectly";
+                }
             }
             catch(Axilent_MisconfigurationException $ex)
             {
@@ -200,7 +202,7 @@ class Axilent_Core
             }
             catch(Axilent_Exception $ex)
             {
-                $widget_errors[] = "Content Posting: There was a general error posting content with the settings above: ".$ex->getMessage();
+                $widget_errors[] = "Ping: Axilent API returned an error in response to a 'ping'. Settings above: ".$ex->getMessage();
             }
         }
 
