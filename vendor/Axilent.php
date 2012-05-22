@@ -13,7 +13,7 @@
  * This is the core Axilent PHP library. It is used to authenticate and make
  *  API calls to Axilent.
  * @author Kenny Katzgrau, Katzgrau LLC <kenny@katgrau.com> www.katzgau.com
- * @version Works with Axilent API beta1
+ * @version Works with Axilent API beta3
  */
 class Axilent 
 {    
@@ -56,7 +56,7 @@ class Axilent
      * The version of the API we're using
      * @var string
      */
-    protected $_apiVersion = "beta1";
+    protected $_apiVersion = "beta3";
     
     /**
      * A hash of active API instances
@@ -97,7 +97,7 @@ class Axilent
      * Make a request to the Axilent API
      * @param type $method The request type, like "get", "post", etc.
      * @param type $type The name fo the resource we're sending data to, like
-     *  "axilent.airtower"
+     *  "axilent.library"
      * @param type $path The URI to send data to
      * @param type $arguments An associative array that will be encoded as JSON 
      *  and posted
@@ -136,7 +136,7 @@ class Axilent
     
     /**
      * Get the request url for a call
-     * @param type $target The resourceor function, such as "axilent.airtower"
+     * @param type $target The resourceor function, such as "axilent.library"
      * @param type $path The URI for the request and the given resource
      */
     protected function _getRequestURL($type, $target, $path = false)
@@ -172,7 +172,7 @@ class Axilent
         
         if($content_key) $args['basekey'] = $content_key;
         
-        $result = $this->_makeRequest('get', 'function', 'axilent.content', 'policycontent', $args);
+        $result = $this->_makeRequest('get', 'function', 'axilent.content', 'contentchannel', $args);
         
         return $result;
     }
@@ -195,7 +195,7 @@ class Axilent
      */
     public function ping($content_type = 'post') 
     {
-        $response = $this->_makeRequest('get', 'function', 'axilent.airtower', 'ping', array (
+        $response = $this->_makeRequest('get', 'function', 'axilent.library', 'ping', array (
             'project' => $this->_project,
             'content_type' => $content_type
         ));
@@ -226,11 +226,11 @@ class Axilent
             $args['key'] = $content_key;
         }
         
-        $response = $this->_makeRequest($method, 'resource', 'axilent.airtower', 'content', $args);
+        $response = $this->_makeRequest($method, 'resource', 'axilent.library', 'content', $args);
         
         # If a PUT fails, come back with a post
         if($method == 'put' && Axilent_Net::$lastStatus != '200') {
-            $response = $this->_makeRequest('post', 'resource', 'axilent.airtower', 'content', $args);
+            $response = $this->_makeRequest('post', 'resource', 'axilent.library', 'content', $args);
         }
         
         if(!$content_key) 
