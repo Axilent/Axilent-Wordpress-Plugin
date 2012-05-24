@@ -79,19 +79,19 @@
         </tr>
         <tr>
             <td>Sync Title Field</td>
-            <td><input type="text" name="axilent_title_field" value="<?php echo $axilent_title_field ? $axilent_title_field : 'Title' ?>" /></td>
+            <td><input type="text" name="axilent_title_field" value="<?php echo $axilent_title_field ? $axilent_title_field : 'title' ?>" /></td>
         </tr>
         <tr>
             <td>Sync Content Field</td>
-            <td><input type="text" name="axilent_content_field" value="<?php echo $axilent_content_field ? $axilent_content_field : 'Content' ?>" /></td>
+            <td><input type="text" name="axilent_content_field" value="<?php echo $axilent_content_field ? $axilent_content_field : 'content' ?>" /></td>
         </tr>
         <tr>
             <td>Sync Description Field</td>
-            <td><input type="text" name="axilent_description_field" value="<?php echo $axilent_description_field ? $axilent_description_field : 'Description' ?>" /></td>
+            <td><input type="text" name="axilent_description_field" value="<?php echo $axilent_description_field ? $axilent_description_field : 'description' ?>" /></td>
         </tr>
         <tr>
             <td>Sync Link Field</td>
-            <td><input type="text" name="axilent_link_field" value="<?php echo $axilent_link_field ? $axilent_link_field : '$axilent_link_field' ?>" /></td>
+            <td><input type="text" name="axilent_link_field" value="<?php echo $axilent_link_field ? $axilent_link_field : 'link' ?>" /></td>
         </tr>
     </tbody>
 </table>

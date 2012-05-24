@@ -159,7 +159,7 @@ class Axilent
         $domain_with_auth = $this->_portletKey . '@' . $this->_apiDomain;
         $temp_base = sprintf($this->_apiBaseTemplate, $domain_with_auth);
         
-        return "{$temp_base}airtower/portlets/content/?key={$content_key}&content_type=post";
+        return "{$temp_base}airtower/portlets/content/?key={$content_key}&content_type=Post";
     }
     
     /**
@@ -168,7 +168,7 @@ class Axilent
      */
     public function getRelevantContent($policy_slug, $content_key = false, $limit = 10)
     {
-        $args = array('content_policy_slug' => $policy_slug, 'limit' => $limit);
+        $args = array('channel' => $policy_slug, 'limit' => $limit);
         
         if($content_key) $args['basekey'] = $content_key;
         
@@ -193,7 +193,7 @@ class Axilent
      * @throws Various Axilent HTTP Exceptions if something goes wrong
      * @return bool False for anything other than an HTTP 200
      */
-    public function ping($content_type = 'post') 
+    public function ping($content_type = 'Post') 
     {
         $response = $this->_makeRequest('get', 'function', 'axilent.library', 'ping', array (
             'project' => $this->_project,
@@ -210,7 +210,7 @@ class Axilent
      *  will be treated as an update
      * @return The content key of the post just sent
      */
-    public function postContent($content, $content_key = false, $content_type = 'post')
+    public function postContent($content, $content_key = false, $content_type = 'Post')
     {
         $args = array (
             'project'      => $this->_project, 

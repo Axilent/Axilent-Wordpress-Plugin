@@ -242,9 +242,9 @@ class Axilent_Core
         $axilent_content_field      = Axilent_Utility::getOption('axilent_content_field');
         
         # Set some defaults for non-existant options
-        $axilent_title_field        = $axilent_title_field ? $axilent_title_field : 'Title';
-        $axilent_description_field  = $axilent_description_field ? $axilent_description_field : 'Description';
-        $axilent_link_field         = $axilent_link_field ? $axilent_link_field : 'Link';
+        $axilent_title_field        = $axilent_title_field ? $axilent_title_field : 'title';
+        $axilent_description_field  = $axilent_description_field ? $axilent_description_field : 'description';
+        $axilent_link_field         = $axilent_link_field ? $axilent_link_field : 'link';
         
         $parents = get_post_ancestors($postId);
         if(count($parents)) $postId = $parents[0];
@@ -382,9 +382,9 @@ class Axilent_Widget extends WP_Widget
         $defaults = array('w_title'             => 'Related Items', 
                           'w_policy_content'    => 'posts',
                           'w_num_items'         => 10,
-                          'w_link_field'        => 'Link',
-                          'w_title_field'       => 'Title',
-                          'w_description_field' => 'Description');
+                          'w_link_field'        => 'link',
+                          'w_title_field'       => 'title',
+                          'w_description_field' => 'description');
         
 		$instance = wp_parse_args((array) $instance, $defaults);
        ?>
