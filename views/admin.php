@@ -70,8 +70,12 @@
             <td><input type="text" name="axilent_project_name" value="<?php echo $axilent_project_name; ?>" /></td>
         </tr>
         <tr>
-            <td>API Key</td>
-            <td><input type="text" name="axilent_api_key" value="<?php echo $axilent_api_key ?>" /></td>
+            <td>Library Key</td>
+            <td><input type="text" name="axilent_library_key" value="<?php echo $axilent_library_key ?>" /></td>
+        </tr>
+        <tr>
+            <td>Deployment Key</td>
+            <td><input type="text" name="axilent_deployment_key" value="<?php echo $axilent_deployment_key ?>" /></td>
         </tr>
         <tr>
             <td>Sync posts to Axilent</td>

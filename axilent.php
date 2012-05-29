@@ -97,10 +97,11 @@ class Axilent_Core
         if(self::$_axilent) return self::$_axilent;
         
         $axilent_project_name   = Axilent_Utility::getOption('axilent_project_name');
-        $axilent_api_key        = Axilent_Utility::getOption('axilent_api_key');
+        $axilent_library_key    = Axilent_Utility::getOption('axilent_library_key');
+        $axilent_deployment_key = Axilent_Utility::getOption('axilent_deployment_key');
         $portlet_key            = get_user_meta(get_current_user_id(), 'axilent_portlet_key', true);
 
-        self::$_axilent = new Axilent($axilent_project_name, $axilent_api_key, $portlet_key);
+        self::$_axilent = new Axilent($axilent_project_name, $axilent_library_key, $axilent_deployment_key, $portlet_key);
         
         return self::$_axilent;
     }
@@ -131,7 +132,8 @@ class Axilent_Core
             }
             
             Axilent_Utility::setOption('axilent_project_name',      $_POST['axilent_project_name']);
-            Axilent_Utility::setOption('axilent_api_key',           $_POST['axilent_api_key']);
+            Axilent_Utility::setOption('axilent_library_key',       $_POST['axilent_library_key']);
+            Axilent_Utility::setOption('axilent_deployment_key',    $_POST['axilent_deployment_key']);
             Axilent_Utility::setOption('axilent_title_field',       $_POST['axilent_title_field']);
             Axilent_Utility::setOption('axilent_link_field',        $_POST['axilent_link_field']);
             Axilent_Utility::setOption('axilent_description_field', $_POST['axilent_description_field']);
@@ -150,7 +152,8 @@ class Axilent_Core
         }
         
         $axilent_project_name       = Axilent_Utility::getOption('axilent_project_name');
-        $axilent_api_key            = Axilent_Utility::getOption('axilent_api_key');
+        $axilent_library_key        = Axilent_Utility::getOption('axilent_library_key');
+        $axilent_deployment_key     = Axilent_Utility::getOption('axilent_deployment_key');
         $axilent_title_field        = Axilent_Utility::getOption('axilent_title_field');
         $axilent_description_field  = Axilent_Utility::getOption('axilent_description_field');
         $axilent_link_field         = Axilent_Utility::getOption('axilent_link_field');
@@ -208,7 +211,8 @@ class Axilent_Core
 
         $data = array (
             'axilent_project_name'      => $axilent_project_name,
-            'axilent_api_key'           => $axilent_api_key,
+            'axilent_library_key'       => $axilent_library_key,
+            'axilent_deployment_key'    => $axilent_deployment_key,
             'axilent_title_field'       => $axilent_title_field,
             'axilent_link_field'        => $axilent_link_field,
             'axilent_content_field'     => $axilent_content_field,

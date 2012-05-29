@@ -16,13 +16,7 @@
  * @version Works with Axilent API beta3
  */
 class Axilent 
-{    
-    /**
-     * The API Key
-     * @var string
-     */
-    protected $_apiKey = null;
-    
+{        
     /**
      * The base URL for the Axilent API. Will be set int he constructor
      * @var type 
@@ -40,6 +34,13 @@ class Axilent
      * @var type 
      */
     protected $_apiDomain = "www.axilent.net";
+    
+    /**
+     * The API Key
+     * @var string
+     */
+    protected $_deploymentKey = null;
+    
     /**
      * A template for API Functions
      * @var string 
@@ -65,6 +66,12 @@ class Axilent
     protected static $_instances = array();
     
     /**
+     * The API Key
+     * @var string
+     */
+    protected $_libraryKey = null;
+    
+    /**
      * A portlet key
      * @var type 
      */
@@ -78,14 +85,16 @@ class Axilent
     
     /**
      * Create a new Axilent API client
-     * @param type $project The project name
-     * @param type $apiKey 
+     * @param string $project The project name
+     * @param string $libraryKey 
+     * @param string $deploymentKey
      */
-    public function __construct($project, $apiKey, $portlet_key = null)
+    public function __construct($project, $libraryKey = false, $deploymentKey = false, $portlet_key = null)
     {
-        $this->_apiKey      = $apiKey;
-        $this->_portletKey  = $portlet_key;
-        $this->_project     = $project;
+        $this->_libraryKey    = $libraryKey;
+        $this->_deploymentKey = $deploymentKey;
+        $this->_portletKey    = $portlet_key;
+        $this->_project       = $project;
         
         # Build the API
         $this->_apiBase     = sprintf($this->_apiBaseTemplate, $this->_apiDomain);
@@ -96,14 +105,14 @@ class Axilent
     /**
      * Make a request to the Axilent API
      * @param type $method The request type, like "get", "post", etc.
-     * @param type $type The name fo the resource we're sending data to, like
-     *  "axilent.library"
-     * @param type $path The URI to send data to
+     * @param type $type The type of the object we're hitting, like 'function'
+     *  or 'resource'
+     * @param type $path The URI to send data to, like "axilent.library"
      * @param type $arguments An associative array that will be encoded as JSON 
      *  and posted
      * @return object An object with 'url', 'body' (response body), and 'status' (http status) 
      *  properties
-     * @throws Exception If curl is not found
+     * @throws Exception If one of several errors is thrown
      */
     protected function _makeRequest($method, $type, $target, $path = false, $arguments = array())
     {
@@ -114,11 +123,30 @@ class Axilent
 
         $url = $this->_getRequestURL($type, $target, $path);
         
-        if($method == 'get')
-            $result = Axilent_Net::call('get', $url, $arguments, array(CURLOPT_USERPWD => $this->_apiKey));
-        else
-            $result = Axilent_Net::call($method, $url, json_encode($arguments), array(CURLOPT_USERPWD => $this->_apiKey));
+        /* Figure out which sort of auth key we should use */
+        $key = false;
+        if($target == 'axilent.library')
+        {
+            if($this->_libraryKey === false)
+                throw new Axilent_MisconfigurationException('You must initialize the Axilent client with a library key to push data to Axilent');
 
+            $key = $this->_libraryKey;
+        }
+        else
+        {
+            if($this->_deploymentKey === false)
+                throw new Axilent_MisconfigurationException('You must initialize the Axilent client with a deployment key to retrieve data from Axilent');
+             
+            $key = $this->_deploymentKey;
+        }
+        
+        /* JSON-encode the arguments if it's a POST or PUT */
+        if($method == 'get')
+            $result = Axilent_Net::call('get', $url, $arguments, array(CURLOPT_USERPWD => $key));
+        else
+            $result = Axilent_Net::call($method, $url, json_encode($arguments), array(CURLOPT_USERPWD => $key));
+
+        /* Check for anything gone wrong */
         if(Axilent_Net::$lastStatus == '409') {
             throw new Axilent_MisconfigurationException("Recieved misconfiguration status from endpoint at $url with HTTP $method and args" . print_r($arguments, true));
         }
